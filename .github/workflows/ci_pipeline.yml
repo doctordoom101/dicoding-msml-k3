@@ -1,6 +1,5 @@
 name: CI/CD MLflow Pipeline
 
-# Trigger: Jalan setiap kali ada Push ke branch main
 on:
   push:
     branches: [ "main" ]
@@ -19,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    # 1. Checkout Code
+    # 1. Checkout
     - name: Checkout Repository
       uses: actions/checkout@v3
 
@@ -29,50 +28,58 @@ jobs:
       with:
         python-version: '3.9'
 
-    # 3. Install Dependencies Global (untuk menjalankan perintah mlflow)
+    # 3. Install
     - name: Install MLflow & Dependencies
       run: |
         pip install mlflow dagshub pandas scikit-learn matplotlib seaborn
 
-    # 4. Login ke Docker Hub
+    # 4. Login Docker
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 5. Jalankan Training (MLflow Run)
-    # Ini akan menjalankan 'MLProject' yang ada di folder MLProject
-    # Hasil training (Metrics/Model) otomatis masuk ke DagsHub karena ENV VAR di atas
+    # 5. Run Training
+    # PERBAIKAN: Nama eksperimen disamakan dengan Python script (Underscore)
     - name: Run MLflow Project (Retraining)
       run: |
         cd MLProject
-        mlflow run . --env-manager=local --experiment-name "Fraud-Detection-Experiment"
+        mlflow run . --env-manager=local --experiment-name "Fraud_Detection_Experiment"
 
-    # 6. Build Docker Image dari Model Terakhir
-    # Kita mengambil model terakhir yang tersimpan di run ini dan membungkusnya jadi Docker Image
+    # 6. Build Docker Image (METODE ROBUST: Download via Python -> Build Local)
     - name: Build Docker Image using MLflow
       run: |
-        # Menggunakan script Python untuk mengambil Run ID terakhir secara otomatis & akurat
-        # Kita menggunakan library mlflow yang sudah terinstall untuk mencari run terakhir dari eksperimen
-        LAST_RUN_ID=$(python -c "import mlflow; client = mlflow.MlflowClient(); exp = client.get_experiment_by_name('Fraud_Detection_Experiment'); runs = client.search_runs(exp.experiment_id, max_results=1); print(runs[0].info.run_id)")
+        # Script Python untuk download artifact 'model' secara aman
+        python -c "
+        import mlflow
+        import dagshub
+        import sys
         
-        # Cek apakah ID berhasil didapat
-        if [ -z "$LAST_RUN_ID" ]; then
-          echo "Error: Run ID tidak ditemukan!"
-          exit 1
-        fi
+        # Init Auth
+        dagshub.init(repo_owner='${{ secrets.DAGSHUB_USERNAME }}', repo_name='Fraud-Detection-Experiment', mlflow=True)
+        
+        client = mlflow.MlflowClient()
+        # Cari Run ID dari eksperimen yang baru saja jalan
+        exp = client.get_experiment_by_name('Fraud_Detection_Experiment')
+        runs = client.search_runs(exp.experiment_id, max_results=1)
+        
+        last_run_id = runs[0].info.run_id
+        print(f'Mendownload model dari Run ID: {last_run_id}')
+        
+        # Download folder 'model' ke folder lokal saat ini
+        mlflow.artifacts.download_artifacts(run_id=last_run_id, artifact_path='model', dst_path='.')
+        "
 
-        echo "Building Docker for Run ID: $LAST_RUN_ID"
+        echo "Building Docker Image from downloaded artifact..."
         
-        # Build Docker Image menggunakan mlflow models build-docker
-        # Nama image: username/nama-image:tag
+        # Build dari folder lokal 'model'
         mlflow models build-docker \
-          -m "runs:/$LAST_RUN_ID/model" \
+          -m "model" \
           -n "${{ secrets.DOCKER_USERNAME }}/fraud-detection-model:latest" \
           --enable-mlserver
 
-    # 7. Push Image ke Docker Hub
+    # 7. Push
     - name: Push to Docker Hub
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/fraud-detection-model:latest
