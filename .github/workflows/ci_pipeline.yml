@@ -46,7 +46,7 @@ jobs:
     - name: Run MLflow Project (Retraining)
       run: |
         cd MLProject
-        mlflow run . --no-conda --experiment-name "Fraud_Detection_CI"
+        mlflow run . --env-manager=local --experiment-name "Fraud-Detection-Experiment-CI-Workflow"
       # Catatan: --no-conda digunakan agar lebih cepat di GitHub Actions (menggunakan pip global), 
       # tapi idealnya gunakan conda jika ingin isolasi sempurna.
 
