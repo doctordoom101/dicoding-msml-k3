@@ -47,7 +47,7 @@ jobs:
     - name: Run MLflow Project (Retraining)
       run: |
         cd MLProject
-        mlflow run . --env-manager=local --experiment-name "Fraud-Detection-Experiment-CI-Workflow"
+        mlflow run . --env-manager=local --experiment-name "Fraud-Detection-Experiment"
       # Catatan: --no-conda digunakan agar lebih cepat di GitHub Actions (menggunakan pip global), 
       # tapi idealnya gunakan conda jika ingin isolasi sempurna.
 
@@ -56,7 +56,7 @@ jobs:
     - name: Build Docker Image using MLflow
       run: |
         # Ambil Run ID terakhir dari eksperimen
-        LAST_RUN_ID=$(mlflow experiments list --view all | grep "Fraud_Detection_CI" -A 1 | tail -n 1 | awk '{print $1}')
+        LAST_RUN_ID=$(mlflow experiments list --view all | grep "Fraud_Detection_Experiment" -A 1 | tail -n 1 | awk '{print $1}')
         
         echo "Building Docker for Run ID: $LAST_RUN_ID"
         
