@@ -68,7 +68,7 @@ jobs:
         print(f'Mendownload model dari Run ID: {last_run_id}')
         
         # Download folder 'model' ke folder lokal saat ini
-        mlflow.artifacts.download_artifacts(run_id=last_run_id, artifact_path='model', dst_path='.')
+        mlflow.artifacts.download_artifacts(run_id=last_run_id, name='model', dst_path='.')
         "
 
         echo "Building Docker Image from downloaded artifact..."
