@@ -84,6 +84,8 @@ def run_tuning():
         mlflow.log_param("tuning_method", "GridSearchCV")
         
         # B. Evaluasi
+        y_pred = best_model.predict(X_test)
+
         acc = accuracy_score(y_test, y_pred)
         prec = precision_score(y_test, y_pred, average='weighted', zero_division=0)
         rec = recall_score(y_test, y_pred, average='weighted', zero_division=0)
