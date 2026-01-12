@@ -1,0 +1,14 @@
+name: fraud-detection-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - mlflow
+    - dagshub
+    - pandas
+    - scikit-learn
+    - matplotlib
+    - seaborn
