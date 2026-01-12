@@ -48,8 +48,6 @@ jobs:
       run: |
         cd MLProject
         mlflow run . --env-manager=local --experiment-name "Fraud-Detection-Experiment"
-      # Catatan: --no-conda digunakan agar lebih cepat di GitHub Actions (menggunakan pip global), 
-      # tapi idealnya gunakan conda jika ingin isolasi sempurna.
 
     # 6. Build Docker Image dari Model Terakhir
     # Kita mengambil model terakhir yang tersimpan di run ini dan membungkusnya jadi Docker Image
