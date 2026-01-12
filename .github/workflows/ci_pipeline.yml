@@ -53,9 +53,16 @@ jobs:
     # Kita mengambil model terakhir yang tersimpan di run ini dan membungkusnya jadi Docker Image
     - name: Build Docker Image using MLflow
       run: |
-        # Ambil Run ID terakhir dari eksperimen
-        LAST_RUN_ID=$(mlflow experiments list --view all | grep "Fraud_Detection_Experiment" -A 1 | tail -n 1 | awk '{print $1}')
+        # Menggunakan script Python untuk mengambil Run ID terakhir secara otomatis & akurat
+        # Kita menggunakan library mlflow yang sudah terinstall untuk mencari run terakhir dari eksperimen
+        LAST_RUN_ID=$(python -c "import mlflow; client = mlflow.MlflowClient(); exp = client.get_experiment_by_name('Fraud_Detection_Experiment'); runs = client.search_runs(exp.experiment_id, max_results=1); print(runs[0].info.run_id)")
         
+        # Cek apakah ID berhasil didapat
+        if [ -z "$LAST_RUN_ID" ]; then
+          echo "Error: Run ID tidak ditemukan!"
+          exit 1
+        fi
+
         echo "Building Docker for Run ID: $LAST_RUN_ID"
         
         # Build Docker Image menggunakan mlflow models build-docker
