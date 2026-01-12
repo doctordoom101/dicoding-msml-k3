@@ -90,6 +90,8 @@ def run_tuning():
 
         # C. Log Metrics
         mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("precision", prec)
+        mlflow.log_metric("recall", rec)
         mlflow.log_metric("f1_score", f1)
 
         # D. Log Artifacts
