@@ -43,6 +43,10 @@ jobs:
     # 5. Run Training
     # PERBAIKAN: Nama eksperimen disamakan dengan Python script (Underscore)
     - name: Run MLflow Project (Retraining)
+      env:
+        DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+        MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
       run: |
         cd MLProject
         mlflow run . --env-manager=local --experiment-name "Fraud_Detection_Experiment"
