@@ -26,15 +26,17 @@ def get_mlflow_run():
     """
     if mlflow.active_run():
         print(f"Active run detected (ID: {mlflow.active_run().info.run_id}). Menggunakan run dari CI.")
+        
+        # Opsional: Ubah nama run di CI agar terlihat rapi di DagsHub
+        mlflow.set_tag("mlflow.runName", "RandomForest_CI_Pipeline")
+        
         return nullcontext()
     else:
         print("Tidak ada active run. Memulai run baru secara manual.")
         mlflow.set_experiment(EXPERIMENT_NAME)
-        return mlflow.start_run(run_name="RandomForest_GridSearch_Manual")
+        return mlflow.start_run(run_name="RandomForest_Manual_Run")
 
 def run_tuning():
-    print("=== Memulai Hyperparameter Tuning ===")
-
     # 1. Setup DagsHub
     dagshub.init(repo_owner=DAGSHUB_USER, repo_name=DAGSHUB_REPO, mlflow=True)
     
@@ -140,7 +142,8 @@ def run_tuning():
         mlflow.sklearn.log_model(
             sk_model=model,
             artifact_path="model",
-            signature=signature
+            signature=signature,
+            pip_requirements=["scikit-learn", "pandas", "numpy", "mlflow", "dagshub"]
         )
 
         # Cleanup
