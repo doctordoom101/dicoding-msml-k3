@@ -117,7 +117,7 @@ def run_tuning():
         # E. Log Model Terbaik
         # nama "model" agar sesuai dengan script YAML Docker
         print("Menyimpan model terbaik ke DagsHub...")
-        mlflow.sklearn.log_model(best_model, "best_model") 
+        mlflow.sklearn.log_model(best_model, "model") 
 
         # Cleanup
         if os.path.exists(plot_filename): os.remove(plot_filename)
