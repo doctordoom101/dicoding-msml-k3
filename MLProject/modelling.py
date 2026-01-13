@@ -66,23 +66,27 @@ def run_tuning():
 
     # 4. Mulai MLflow Run 
     with get_mlflow_run():
-        print("Mencari parameter terbaik dengan GridSearchCV...")
+        print("MLflow Run dimulai...")
+
+        # --- A. Define Hyperparameters ---
+        n_estimators = 100
+        max_depth = 10
+        random_state = 42
         
-        rf = RandomForestClassifier(random_state=42)
-        grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, 
-                                   cv=3, scoring='f1_weighted', verbose=1, n_jobs=-1)
-        grid_search.fit(X_train, y_train)
+        # --- B. Log Parameters (Manual) ---
+        mlflow.log_param("n_estimators", n_estimators)
+        mlflow.log_param("max_depth", max_depth)
+        mlflow.log_param("model_type", "Random Forest Classifier")
+        mlflow.log_param("train_size", len(X_train))
+        mlflow.log_param("test_size", len(X_test))
 
-        best_model = grid_search.best_estimator_
-        best_params = grid_search.best_params_
-        best_score = grid_search.best_score_
-
-        print(f"Parameter Terbaik: {best_params}")
-
-        # A. Log Params
-        mlflow.log_params(best_params)
-        mlflow.log_param("tuning_method", "GridSearchCV")
-        
+        # --- C. Train Model ---
+        print("Sedang melatih model...")
+        model = RandomForestClassifier(n_estimators=n_estimators, 
+                                       max_depth=max_depth, 
+                                       random_state=random_state)
+        model.fit(X_train, y_train)
+   
         # B. Evaluasi
         y_pred = best_model.predict(X_test)
 
@@ -98,20 +102,31 @@ def run_tuning():
         mlflow.log_metric("f1_score", f1)
 
         # D. Log Artifacts
+        # Artifact 1: Confusion Matrix Plot (Gambar)
+        print("Membuat Artifact 1: Confusion Matrix...")
         cm = confusion_matrix(y_test, y_pred)
         plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Greens')
-        plt.title(f'Best Model Confusion Matrix (F1: {f1:.2f})')
-        plot_filename = "best_model_cm.png"
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        plt.title(f'Confusion Matrix (Acc: {acc:.2f})')
+        plt.ylabel('Actual')
+        plt.xlabel('Predicted')
+        
+        # Simpan ke file lokal sementara
+        plot_filename = "confusion_matrix.png"
         plt.savefig(plot_filename)
-        plt.close()
+        plt.close() # Tutup plot agar tidak menumpuk di memori
+        
+        # Upload ke MLflow
         mlflow.log_artifact(plot_filename)
 
+        # Artifact 2: Classification Report (Text File)
+        print("Membuat Artifact 2: Classification Report...")
         report = classification_report(y_test, y_pred)
-        report_filename = "best_model_report.txt"
+        report_filename = "classification_report.txt"
         with open(report_filename, "w") as f:
-            f.write(f"Hyperparameters: {best_params}\n\n") 
             f.write(report)
+        
+        # Upload ke MLflow
         mlflow.log_artifact(report_filename)
 
         # E. Log Model Terbaik
