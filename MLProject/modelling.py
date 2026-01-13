@@ -64,7 +64,7 @@ def run_tuning():
         'class_weight': ['balanced']
     }
 
-    # 4. Mulai MLflow Run (GUNAKAN FUNGSI PINTAR)
+    # 4. Mulai MLflow Run 
     with get_mlflow_run():
         print("Mencari parameter terbaik dengan GridSearchCV...")
         
@@ -115,9 +115,18 @@ def run_tuning():
         mlflow.log_artifact(report_filename)
 
         # E. Log Model Terbaik
-        # nama "model" agar sesuai dengan script YAML Docker
         print("Menyimpan model terbaik ke DagsHub...")
-        mlflow.sklearn.log_model(best_model, "model") 
+        
+        # DEFINISIKAN SIGNATURE (Opsional tapi disarankan agar MLflow tidak bingung)
+        from mlflow.models.signature import infer_signature
+        signature = infer_signature(X_test, y_pred)
+
+        # LOG MODEL DENGAN KONFIGURASI MANUAL
+        mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path="model",
+            signature=signature
+        )
 
         # Cleanup
         if os.path.exists(plot_filename): os.remove(plot_filename)
