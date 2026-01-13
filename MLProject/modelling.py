@@ -88,7 +88,7 @@ def run_tuning():
         model.fit(X_train, y_train)
    
         # B. Evaluasi
-        y_pred = best_model.predict(X_test)
+        y_pred = model.predict(X_test)
 
         acc = accuracy_score(y_test, y_pred)
         prec = precision_score(y_test, y_pred, average='weighted', zero_division=0)
@@ -138,7 +138,7 @@ def run_tuning():
 
         # LOG MODEL DENGAN KONFIGURASI MANUAL
         mlflow.sklearn.log_model(
-            sk_model=best_model,
+            sk_model=model,
             artifact_path="model",
             signature=signature
         )
